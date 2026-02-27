@@ -6,6 +6,7 @@ import { PlayerRoom } from "./screens/PlayerRoom";
 
 export const router = createHashRouter([
   { path: "/", element: <RoleSelect /> },
+  { path: "/play", element: <RoleSelect /> },
   { path: "/host", element: <HostRoom /> },
   { path: "/host/:roomCode", element: <HostRoom /> },
   { path: "/play/:roomCode", element: <PlayerRoom /> },
