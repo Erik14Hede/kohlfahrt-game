@@ -9,10 +9,21 @@ export function useRoom() {
   const [selfId, setSelfId] = React.useState<string | null>(null);
   const [state, setState] = React.useState<RoomState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [connectionState, setConnectionState] = React.useState<"idle" | "connecting" | "open" | "closed">("idle");
 
   const connect = React.useCallback(() => {
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+
+    setConnectionState("connecting");
+    setError(null);
+
     const socket = new WebSocket(WS_URL);
+
+    socket.onopen = () => {
+      setConnectionState("open");
+      setError(null);
+    };
+
     socket.onmessage = (ev) => {
       try {
         const msg: ServerToClient = JSON.parse(ev.data);
@@ -29,21 +40,34 @@ export function useRoom() {
         // ignore
       }
     };
+
     socket.onclose = () => {
-      // keep UI usable; user can reconnect via button
+      setConnectionState("closed");
       setWs(null);
+      setSelfId(null);
+      setState(null);
     };
-    socket.onerror = () => setError("WebSocket-Fehler. Prüfe die Server-URL.");
+
+    socket.onerror = () => setError("WebSocket-Fehler. Pruefe die Server-URL.");
     setWs(socket);
   }, [ws]);
 
   const send = React.useCallback((msg: ClientToServer) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      setError("Nicht verbunden. Tippe auf „Verbinden“.");
+      setError("Nicht verbunden. Tippe auf 'Verbinden'.");
       return;
     }
     ws.send(JSON.stringify(msg));
   }, [ws]);
 
-  return { ws, connect, send, selfId, state, error };
+  return {
+    ws,
+    connect,
+    send,
+    selfId,
+    state,
+    error,
+    connectionState,
+    isOpen: connectionState === "open",
+  };
 }
