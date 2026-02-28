@@ -19,7 +19,7 @@ export function HostRoom() {
   const params = useParams();
   const initialRoom = (params as any).roomCode as string | undefined;
 
-  const { connect, send, selfId, state, error, ws } = useRoom();
+  const { connect, send, selfId, state, error, isOpen } = useRoom();
 
   const [roomCode] = React.useState(() => initialRoom || makeRoomCode());
   const [name, setName] = React.useState("Host");
@@ -31,15 +31,13 @@ export function HostRoom() {
   }, [connect]);
 
   React.useEffect(() => {
-    if (ws?.readyState === WebSocket.OPEN && !selfId) {
+    if (isOpen && !selfId) {
       send({ type: "join", roomCode, name, role: "host" });
       nav(`/host/${roomCode}`, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ws, roomCode, selfId]);
+  }, [isOpen, name, nav, roomCode, selfId, send]);
 
   const participants = state?.participants ?? [];
-  const connected = !!state;
 
   const hostMetaSync = () => {
     send({ type: "host/setMeta", roomCode, tourName, gameMode });
@@ -84,7 +82,7 @@ export function HostRoom() {
             </button>
           </div>
 
-          {!connected && (
+          {!isOpen && (
             <div className="mt-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-900">
               Noch nicht verbunden… Stelle sicher, dass der WS-Server läuft. {error ? `(${error})` : ""}
             </div>
