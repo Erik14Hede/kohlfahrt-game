@@ -10,7 +10,7 @@ export function PlayerRoom() {
   const params = useParams();
   const roomCode = ((params as any).roomCode as string)?.toUpperCase() || "";
 
-  const { connect, send, selfId, state, error, ws } = useRoom();
+  const { connect, send, selfId, state, error, isOpen } = useRoom();
 
   const [name, setName] = React.useState("");
   const [joined, setJoined] = React.useState(false);
@@ -19,8 +19,12 @@ export function PlayerRoom() {
     connect();
   }, [connect]);
 
+  React.useEffect(() => {
+    if (!selfId) setJoined(false);
+  }, [selfId]);
+
   const doJoin = () => {
-    if (!name.trim()) return;
+    if (!isOpen || !name.trim()) return;
     send({ type: "join", roomCode, name: name.trim(), role: "player" });
     setJoined(true);
   };
@@ -54,7 +58,7 @@ export function PlayerRoom() {
             </button>
           </div>
 
-          {!state && (
+          {!isOpen && (
             <div className="mt-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-900">
               Noch nicht verbunden… {error ? `(${error})` : ""}
             </div>
@@ -71,6 +75,7 @@ export function PlayerRoom() {
               />
               <button
                 onClick={doJoin}
+                disabled={!isOpen || !name.trim()}
                 className="mt-3 w-full py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-lg"
               >
                 Beitreten
